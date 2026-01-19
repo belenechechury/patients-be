@@ -14,4 +14,9 @@ class Patient extends Model
         'phone_number',
         'document_image_path',
     ];
+
+    public function notifications()
+    {
+        return $this->hasMany(PatientNotification::class);
+    }
 }
