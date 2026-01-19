@@ -7,6 +7,7 @@ use App\Http\Requests\StorePatientRequest;
 use App\Http\Requests\UpdatePatientRequest;
 use App\Models\Patient;
 use App\Services\PatientService;
+use App\Http\Resources\PatientResource;
 
 class PatientController extends Controller
 {
@@ -16,7 +17,9 @@ class PatientController extends Controller
 
     public function index()
     {
-        return $this->service->list();
+        return PatientResource::collection(
+            $this->service->list()
+        );
     }
 
     public function store(StorePatientRequest $request)
