@@ -11,28 +11,40 @@ class PatientService
 {
     public function list(
         int $page = 1,
-        int $pageSize = 10,
+        int $page_size = 10,
         string $search = '',
-        string $sortBy = 'first_name'
+        string $sort_by = 'first_name',
+        ?string $created_from = null,
+        ?string $created_to = null
     ) {
         $query = Patient::query();
 
+        // Apply search
         if (!empty($search)) {
-            $searchTerm = strtolower($search); // lowercase input
-            $query->where(function($q) use ($searchTerm) {
-                $q->whereRaw('LOWER(first_name) LIKE ?', ["%{$searchTerm}%"])
-                ->orWhereRaw('LOWER(last_name) LIKE ?', ["%{$searchTerm}%"])
-                ->orWhereRaw('LOWER(email) LIKE ?', ["%{$searchTerm}%"]);
+            $search_term = strtolower($search);
+            $query->where(function ($q) use ($search_term) {
+                $q->whereRaw('LOWER(first_name) LIKE ?', ["%{$search_term}%"])
+                  ->orWhereRaw('LOWER(last_name) LIKE ?', ["%{$search_term}%"])
+                  ->orWhereRaw('LOWER(email) LIKE ?', ["%{$search_term}%"]);
             });
         }
 
-        $allowedSorts = ['first_name', 'last_name', 'email', 'created_at'];
-        if (!empty($sortBy) && in_array($sortBy, $allowedSorts)) {
-            $query->orderBy($sortBy);
+        // Apply created_at filter if provided
+        if ($created_from) {
+            $query->whereDate('created_at', '>=', $created_from);
+        }
+        if ($created_to) {
+            $query->whereDate('created_at', '<=', $created_to);
+        }
+
+        // Allowed sort columns
+        $allowed_sorts = ['first_name', 'last_name', 'email', 'created_at'];
+        if (!empty($sort_by) && in_array($sort_by, $allowed_sorts)) {
+            $query->orderBy($sort_by);
         }
 
         return $query->paginate(
-            perPage: $pageSize,
+            perPage: $page_size,
             columns: ['*'],
             pageName: 'page',
             page: $page

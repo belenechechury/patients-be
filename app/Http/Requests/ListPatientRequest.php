@@ -14,20 +14,24 @@ class ListPatientRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'page' => 'integer|min:1',
-            'pageSize' => 'integer|min:1|max:100',
-            'search' => 'string|nullable',
-            'sortBy' => 'string|nullable',
+            'page' => 'sometimes|integer|min:1',
+            'page_size' => 'sometimes|integer|min:1|max:100',
+            'search' => 'sometimes|string',
+            'sort_by' => 'sometimes|string',
+            'created_from' => 'sometimes|date',
+            'created_to' => 'sometimes|date',
         ];
     }
 
     public function validatedData(): array
     {
-        return [
-            'page' => $this->input('page', 1),
-            'pageSize' => $this->input('pageSize', 10),
-            'search' => $this->input('search', ''),
-            'sortBy' => $this->input('sortBy', 'first_name'),
-        ];
+        return array_merge([
+            'page' => 1,
+            'page_size' => 10,
+            'search' => '',
+            'sort_by' => 'first_name',
+            'created_from' => null,
+            'created_to' => null,
+        ], $this->validated());
     }
 }

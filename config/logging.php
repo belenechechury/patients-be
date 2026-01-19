@@ -60,9 +60,8 @@ return [
 
         'single' => [
             'driver' => 'single',
-            'path' => storage_path('logs/laravel.log'),
-            'level' => env('LOG_LEVEL', 'debug'),
-            'replace_placeholders' => true,
+            'path' => 'php://stdout',
+            'level' => 'debug',
         ],
 
         'daily' => [

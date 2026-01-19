@@ -15,6 +15,11 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install gd \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Enable PHP error reporting for dev
+RUN echo "display_errors=On" > /usr/local/etc/php/conf.d/docker-php-errors.ini \
+    && echo "display_startup_errors=On" >> /usr/local/etc/php/conf.d/docker-php-errors.ini \
+    && echo "error_reporting=E_ALL" >> /usr/local/etc/php/conf.d/docker-php-errors.ini
+
 # Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
@@ -25,3 +30,6 @@ COPY . .
 RUN composer install --no-interaction --prefer-dist
 
 EXPOSE 8000
+
+# Default command: run Laravel artisan serve
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]

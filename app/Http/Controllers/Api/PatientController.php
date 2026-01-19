@@ -22,9 +22,11 @@ class PatientController extends Controller
 
         $patients = $this->service->list(
             $data['page'],
-            $data['pageSize'],
+            $data['page_size'],
             $data['search'],
-            $data['sortBy']
+            $data['sort_by'],
+            $data['created_from'],
+            $data['created_to']
         );
 
         return PatientResource::collection($patients);
