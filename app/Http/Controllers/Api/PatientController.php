@@ -26,7 +26,10 @@ class PatientController extends Controller
             $request->file('document_image')
         );
 
-        return response()->json($patient, 201);
+        return response()->json([
+            'message' => 'Paciente registrado correctamente',
+            'data' => $patient,
+        ], 201);
     }
 
     public function show(Patient $patient)
@@ -42,7 +45,7 @@ class PatientController extends Controller
             $request->file('document_image')
         );
 
-        return $patient;
+        return response()->json($patient);
     }
 
     public function destroy(Patient $patient)

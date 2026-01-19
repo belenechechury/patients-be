@@ -2,10 +2,14 @@
 
 namespace App\Services;
 
+use App\Exceptions\PatientException;
 use App\Jobs\SendPatientConfirmationJob;
 use App\Models\Patient;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Throwable;
 
 class PatientService
 {
@@ -16,36 +20,73 @@ class PatientService
 
     public function create(array $data, UploadedFile $documentImage): Patient
     {
-        $path = $this->storeDocumentImage($documentImage);
+        try {
+            return DB::transaction(function () use ($data, $documentImage) {
+                $path = $this->storeDocumentImage($documentImage);
 
-        $patient = Patient::create([
-            'first_name' => $data['first_name'],
-            'last_name' => $data['last_name'],
-            'email' => $data['email'],
-            'country_iso' => $data['country_iso'],
-            'phone_number' => $data['phone_number'],
-            'document_image_path' => $path,
-        ]);
+                $patient = Patient::create([
+                    'first_name' => $data['first_name'],
+                    'last_name' => $data['last_name'],
+                    'email' => $data['email'],
+                    'country_iso' => $data['country_iso'],
+                    'phone_number' => $data['phone_number'],
+                    'document_image_path' => $path,
+                ]);
 
-        SendPatientConfirmationJob::dispatch($patient);
+                SendPatientConfirmationJob::dispatch($patient);
 
-        return $patient;
+                return $patient;
+            });
+        } catch (Throwable $e) {
+            Log::error('Error creating patient', [
+                'exception' => $e,
+            ]);
+
+            throw new PatientException(
+                'No se pudo registrar el paciente en este momento'
+            );
+        }
     }
 
-    public function update(Patient $patient, array $data, ?UploadedFile $documentImage = null): Patient
-    {
-        if ($documentImage) {
-            $patient->document_image_path = $this->storeDocumentImage($documentImage);
+    public function update(
+        Patient $patient,
+        array $data,
+        ?UploadedFile $documentImage = null
+    ): Patient {
+        try {
+            if ($documentImage) {
+                $data['document_image_path'] = $this->storeDocumentImage($documentImage);
+            }
+
+            $patient->update($data);
+
+            return $patient;
+        } catch (Throwable $e) {
+            Log::error('Error updating patient', [
+                'patient_id' => $patient->id,
+                'exception' => $e,
+            ]);
+
+            throw new PatientException(
+                'No se pudo actualizar el paciente'
+            );
         }
-
-        $patient->update($data);
-
-        return $patient;
     }
 
     public function delete(Patient $patient): void
     {
-        $patient->delete();
+        try {
+            $patient->delete();
+        } catch (Throwable $e) {
+            Log::error('Error deleting patient', [
+                'patient_id' => $patient->id,
+                'exception' => $e,
+            ]);
+
+            throw new PatientException(
+                'No se pudo eliminar el paciente'
+            );
+        }
     }
 
     private function storeDocumentImage(UploadedFile $image): string
