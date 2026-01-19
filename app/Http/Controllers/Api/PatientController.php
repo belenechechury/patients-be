@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ListPatientRequest;
 use App\Http\Requests\StorePatientRequest;
 use App\Http\Requests\UpdatePatientRequest;
 use App\Models\Patient;
@@ -15,11 +16,18 @@ class PatientController extends Controller
         private readonly PatientService $service
     ) {}
 
-    public function index()
+    public function index(ListPatientRequest $request)
     {
-        return PatientResource::collection(
-            $this->service->list()
+        $data = $request->validatedData();
+
+        $patients = $this->service->list(
+            $data['page'],
+            $data['pageSize'],
+            $data['search'],
+            $data['sortBy']
         );
+
+        return PatientResource::collection($patients);
     }
 
     public function store(StorePatientRequest $request)

@@ -18,6 +18,11 @@ class ListPatientsTest extends TestCase
         $response->assertOk()
             ->assertJson([
                 'data' => [],
+            ])
+            ->assertJsonStructure([
+                'data',
+                'links' => ['first', 'last', 'prev', 'next'],
+                'meta' => ['current_page', 'last_page', 'per_page', 'total'],
             ]);
     }
 
@@ -26,14 +31,48 @@ class ListPatientsTest extends TestCase
     {
         Patient::factory()->count(15)->create();
 
-        $response = $this->getJson('/api/patients?per_page=10');
+        $response = $this->getJson('/api/patients?page=1&pageSize=10');
 
         $response->assertOk()
             ->assertJsonCount(10, 'data')
             ->assertJsonStructure([
-                'data',
-                'links',
-                'meta',
+                'data' => [
+                    '*' => [
+                        'id',
+                        'first_name',
+                        'last_name',
+                        'email',
+                        'country_iso',
+                        'phone_number',
+                        'document_image_path',
+                        'created_at',
+                    ],
+                ],
+                'links' => ['first', 'last', 'prev', 'next'],
+                'meta' => ['current_page', 'last_page', 'per_page', 'total'],
+            ]);
+    }
+
+    /** @test */
+    public function it_can_search_patients_by_name()
+    {
+        Patient::factory()->create([
+            'first_name' => 'Alice',
+            'last_name' => 'Smith',
+        ]);
+
+        Patient::factory()->create([
+            'first_name' => 'Bob',
+            'last_name' => 'Johnson',
+        ]);
+
+        $response = $this->getJson('/api/patients?search=alice');
+
+        $response->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonFragment([
+                'first_name' => 'Alice',
+                'last_name' => 'Smith',
             ]);
     }
 }
